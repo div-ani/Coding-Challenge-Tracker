@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Practice Dashboard & Analytics | Coding Challenge Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Handle Search Section -->
+    <section class="dashboard-search-section">
+        <div class="card search-card">
+            <div class="search-header">
+                <h2>📊 Codeforces Practice Analytics</h2>
+                <p>Enter any Codeforces handle to analyze solved problems, determine typical rating, detect weak topics, and get custom practice recommendations.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('dashboard') }}" class="search-form">
+                <div class="form-row">
+                    <div class="form-group col-grow">
+                        <label for="handle">Codeforces Handle</label>
+                        <input type="text" name="handle" id="handle" class="form-control" 
+                               placeholder="e.g. tourist, Benq, or your handle" value="{{ handle or '' }}" required>
+                    </div>
+
+                    <div class="form-group col">
+                        <label for="level">Target Level</label>
+                        <select name="level" id="level" class="form-control">
+                            <option value="Beginner" {% if level == 'Beginner' %}selected{% endif %}>Beginner</option>
+                            <option value="Intermediate" {% if level == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                            <option value="Advanced" {% if level == 'Advanced' %}selected{% endif %}>Advanced</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group col-btn">
+                        <button type="submit" class="btn btn-primary btn-search">
+                            🔍 Analyze Profile
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    {% if error_message %}
+        <div class="alert alert-danger">
+            {{ error_message }}
+        </div>
+    {% endif %}
+
+    {% if analysis %}
+        <!-- User Analytics Overview Cards -->
+        <section class="stats-overview-grid">
+            <div class="card stat-card">
+                <div class="stat-icon">👤</div>
+                <div class="stat-details">
+                    <span class="stat-label">Codeforces Handle</span>
+                    <h3 class="stat-value">{{ handle }}</h3>
+                    <span class="stat-sub">{{ user_info.rank|capitalize if user_info and user_info.rank else 'Candidate' }}</span>
+                </div>
+            </div>
+
+            <div class="card stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-details">
+                    <span class="stat-label">Typical Rating (Median)</span>
+                    <h3 class="stat-value text-accent">{{ analysis.typical_rating }}</h3>
+                    <span class="stat-sub">Based on unique solved problems</span>
+                </div>
+            </div>
+
+            <div class="card stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-details">
+                    <span class="stat-label">Unique Solved</span>
+                    <h3 class="stat-value text-success">{{ analysis.total_solved }}</h3>
+                    <span class="stat-sub">Accepted submissions (OK)</span>
+                </div>
+            </div>
+
+            <div class="card stat-card highlight-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-details">
+                    <span class="stat-label">2 Weakest Topics</span>
+                    <div class="weak-tags-wrap">
+                        {% for topic in analysis.weakest_topics %}
+                            <span class="badge badge-warning">{{ topic }}</span>
+                        {% endfor %}
+                    </div>
+                    <span class="stat-sub">Lowest solve counts</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="charts-grid">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h4>📈 Solved Problems by Topic</h4>
+                        <span class="chart-subtitle">Common algorithmic areas</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="topicBarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h4>📊 Problem Rating Distribution</h4>
+                        <span class="chart-subtitle">Difficulty spread of solved problems</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="ratingDistChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem Recommendations Section -->
+        <section class="recommendations-section">
+            <div class="section-header">
+                <div>
+                    <h3>🚀 Targeted Practice Recommendations</h3>
+                    <p class="section-desc">
+                        5 unsolved problems targeting your weak areas (<strong>{{ analysis.weakest_topics|join(', ') }}</strong>) 
+                        around typical rating <strong>{{ analysis.typical_rating }}</strong>.
+                    </p>
+                </div>
+                <button type="button" id="shuffleBtn" class="btn btn-shuffle">
+                    <span class="shuffle-icon">🎲</span>
+                    <span>Shuffle Problems</span>
+                </button>
+            </div>
+
+            <!-- Problem Cards Container (Updated via AJAX on shuffle) -->
+            <div id="problemsGrid" class="problems-grid">
+                {% for prob in recommendations %}
+                    <div class="card problem-card">
+                        <div class="problem-card-top">
+                            <span class="problem-code">{{ prob.contestId }}{{ prob.index }}</span>
+                            <span class="badge badge-rating">Rating: {{ prob.rating }}</span>
+                        </div>
+                        <h4 class="problem-name">{{ prob.name }}</h4>
+                        <div class="problem-tags">
+                            {% for tag in prob.tags %}
+                                <span class="tag-pill {% if tag.lower() in analysis.weakest_topics %}tag-weak{% endif %}">
+                                    {{ tag }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        <div class="problem-action">
+                            <a href="{{ prob.link }}" target="_blank" class="btn btn-sm btn-solve">
+                                Solve on Codeforces ↗
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    {% elif handle and not error_message %}
+        <div class="card empty-card">
+            <p>No accepted submissions found for handle <strong>{{ handle }}</strong>. Try another handle or solve a problem on Codeforces first!</p>
+        </div>
+    {% else %}
+        <!-- Demo Banner for beginners -->
+        <div class="card demo-banner">
+            <h3>💡 Beginner Tip: Try with a popular handle</h3>
+            <p>To preview how analytics, weakest topics, and Chart.js graphs work, enter a handle like <code>tourist</code>, <code>Benq</code>, or <code>Um_nik</code> above, or click below:</p>
+            <div class="demo-buttons">
+                <a href="{{ url_for('dashboard', handle='tourist') }}" class="btn btn-outline btn-sm">Try 'tourist'</a>
+                <a href="{{ url_for('dashboard', handle='Benq') }}" class="btn btn-outline btn-sm">Try 'Benq'</a>
+                <a href="{{ url_for('dashboard', handle='Um_nik') }}" class="btn btn-outline btn-sm">Try 'Um_nik'</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if analysis %}
+<script>
+    // Embed Python analysis data into JS variables for Chart.js
+    window.dashboardData = {
+        topicLabels: {{ analysis.tag_counts.keys()|list|tojson }},
+        topicCounts: {{ analysis.tag_counts.values()|list|tojson }},
+        ratingLabels: {{ analysis.rating_distribution.keys()|list|tojson }},
+        ratingCounts: {{ analysis.rating_distribution.values()|list|tojson }},
+        weakTopics: {{ analysis.weakest_topics|tojson }},
+        typicalRating: {{ analysis.typical_rating|tojson }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endif %}
+{% endblock %}

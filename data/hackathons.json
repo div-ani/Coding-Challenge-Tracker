@@ -1,0 +1,62 @@
+[
+  {
+    "id": "hack-01",
+    "name": "Smart India Hackathon 2026",
+    "start_time": "2026-11-25T10:00:00Z",
+    "end_time": "2026-11-27T18:00:00Z",
+    "mode": "offline",
+    "topics": ["AI", "web", "apps", "security"],
+    "level": "Intermediate",
+    "link": "https://sih.gov.in"
+  },
+  {
+    "id": "hack-02",
+    "name": "Global AI & Web Innovation Challenge",
+    "start_time": "2026-12-01T04:30:00Z",
+    "end_time": "2026-12-03T16:00:00Z",
+    "mode": "online",
+    "topics": ["AI", "web"],
+    "level": "Beginner",
+    "link": "https://devpost.com/hackathons/global-ai-web"
+  },
+  {
+    "id": "hack-03",
+    "name": "CyberShield Security Hackathon",
+    "start_time": "2026-12-08T09:00:00Z",
+    "end_time": "2026-12-10T12:00:00Z",
+    "mode": "online",
+    "topics": ["security", "cloud"],
+    "level": "Advanced",
+    "link": "https://cybershield.org/hack2026"
+  },
+  {
+    "id": "hack-04",
+    "name": "HackTheApp Mobile Sprint",
+    "start_time": "2026-12-15T05:00:00Z",
+    "end_time": "2026-12-16T18:00:00Z",
+    "mode": "online",
+    "topics": ["apps", "web"],
+    "level": "Beginner",
+    "link": "https://hacktheapp.io"
+  },
+  {
+    "id": "hack-05",
+    "name": "National Campus Coding Blitz",
+    "start_time": "2026-12-20T03:30:00Z",
+    "end_time": "2026-12-21T15:30:00Z",
+    "mode": "offline",
+    "topics": ["web", "apps", "AI"],
+    "level": "Intermediate",
+    "link": "https://campusblitz.edu/register"
+  },
+  {
+    "id": "hack-06",
+    "name": "NextGen FinTech & Crypto Hack",
+    "start_time": "2027-01-05T06:00:00Z",
+    "end_time": "2027-01-07T14:00:00Z",
+    "mode": "online",
+    "topics": ["security", "web", "AI"],
+    "level": "Advanced",
+    "link": "https://fintechhack.dev"
+  }
+]

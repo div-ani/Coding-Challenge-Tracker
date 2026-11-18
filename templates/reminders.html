@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Email Reminders | Coding Challenge Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <div>
+            <h2>🔔 Stored Email Reminders</h2>
+            <p class="section-desc">List of all scheduled event reminders saved in SQLite database (<code>tracker.db</code>).</p>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-outline btn-sm">← Back to Events</a>
+    </div>
+
+    {% if reminders %}
+        <div class="card table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email Address</th>
+                        <th>Event Name</th>
+                        <th>Event ID</th>
+                        <th>Reminder Preference</th>
+                        <th>Registered At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reminders %}
+                        <tr>
+                            <td>#{{ r['id'] }}</td>
+                            <td><strong>{{ r['email'] }}</strong></td>
+                            <td>{{ r['event_name'] }}</td>
+                            <td><code>{{ r['event_id'] }}</code></td>
+                            <td><span class="badge badge-info">{{ r['reminder_time'] }}</span></td>
+                            <td>{{ r['created_at'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card empty-card">
+            <h3>No reminders scheduled yet!</h3>
+            <p>Go to the <a href="{{ url_for('index') }}">Events page</a> and click "Remind Me" on any contest or hackathon.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

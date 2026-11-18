@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Events & Contests Tracker | Coding Challenge Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Banner & Filter Card -->
+    <section class="hero-section">
+        <div class="hero-header">
+            <h2>🎯 Upcoming Coding Contests & Hackathons</h2>
+            <p class="hero-subtitle">
+                Track live competitive programming rounds and college hackathons converted to <strong>Indian Standard Time (IST)</strong>.
+            </p>
+        </div>
+
+        <!-- User Preferences Filter Form -->
+        <div class="card filter-card">
+            <div class="filter-header">
+                <h3>⚙️ Personalize Your Feed (Fit Labels & Match Scoring)</h3>
+            </div>
+            <form method="POST" action="{{ url_for('index') }}" class="filter-form">
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="rating">Your Codeforces Rating</label>
+                        <input type="number" name="rating" id="rating" class="form-control" 
+                               placeholder="e.g. 1350" value="{{ user_rating or '' }}">
+                        <small class="hint">Computes "Good fit", "A stretch", or "Easier" labels for Div 1/2/3/4.</small>
+                    </div>
+
+                    <div class="form-group col">
+                        <label for="interests">Hackathon Interests (comma-separated)</label>
+                        <input type="text" name="interests" id="interests" class="form-control" 
+                               placeholder="e.g. web, AI, apps, security" value="{{ user_interests or '' }}">
+                        <small class="hint">+1 match score for each topic match.</small>
+                    </div>
+
+                    <div class="form-group col">
+                        <label for="level">Experience Level</label>
+                        <select name="level" id="level" class="form-control">
+                            <option value="">Select Level</option>
+                            <option value="Beginner" {% if user_level == 'Beginner' %}selected{% endif %}>Beginner</option>
+                            <option value="Intermediate" {% if user_level == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                            <option value="Advanced" {% if user_level == 'Advanced' %}selected{% endif %}>Advanced</option>
+                        </select>
+                        <small class="hint">+1 match score if hackathon matches your level.</small>
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Apply Preferences</button>
+                    {% if user_rating or user_interests or user_level %}
+                        <a href="{{ url_for('index') }}" class="btn btn-outline">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- SECTION 1: Codeforces Contests -->
+    <section class="section-container">
+        <div class="section-header">
+            <div>
+                <h3>🏆 Upcoming Codeforces Contests</h3>
+                <p class="section-desc">Fetched from Codeforces API (Cached 1h) • All times in <strong>IST</strong></p>
+            </div>
+            <span class="badge badge-primary">{{ contests|length }} Contests Found</span>
+        </div>
+
+        {% if contests %}
+            <div class="table-responsive card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Contest Name</th>
+                            <th>Start Time (IST)</th>
+                            <th>Duration</th>
+                            <th>Fit Label</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contest in contests %}
+                            <tr>
+                                <td>
+                                    <div class="event-title-cell">
+                                        <a href="{{ contest.link }}" target="_blank" class="event-title-link">
+                                            {{ contest.name }}
+                                        </a>
+                                        <span class="event-id-tag">ID: {{ contest.id }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="time-badge">🕒 {{ contest.start_str }}</span>
+                                </td>
+                                <td>{{ contest.duration_hours }} hrs</td>
+                                <td>
+                                    {% if contest.fit_label == 'Good fit' %}
+                                        <span class="badge badge-success">✓ Good fit</span>
+                                    {% elif contest.fit_label == 'A stretch' %}
+                                        <span class="badge badge-warning">📈 A stretch</span>
+                                    {% elif contest.fit_label == 'Easier than your level' %}
+                                        <span class="badge badge-info">☕ Easier</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary" title="Enter rating in the filter above">No rating set</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ contest.gcal_link }}" target="_blank" class="btn btn-sm btn-gcal" title="Add to Google Calendar">
+                                            📅 Add to GCal
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-reminder" 
+                                                onclick="openReminderModal('{{ contest.id }}', '{{ contest.name }}')">
+                                            🔔 Remind Me
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card empty-card">
+                <p>No upcoming contests currently listed on Codeforces.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- SECTION 2: Curated Hackathons -->
+    <section class="section-container">
+        <div class="section-header">
+            <div>
+                <h3>💡 Curated Hackathons & Sprints</h3>
+                <p class="section-desc">Sorted by interest & level match score, then earliest start date (IST)</p>
+            </div>
+            <span class="badge badge-accent">{{ hackathons|length }} Hackathons Listed</span>
+        </div>
+
+        <div class="hackathon-grid">
+            {% for hack in hackathons %}
+                <div class="card hackathon-card {% if hack.score > 0 %}card-highlight{% endif %}">
+                    <div class="hackathon-card-header">
+                        <div class="mode-badge-wrap">
+                            <span class="badge badge-outline">{{ hack.mode|capitalize }}</span>
+                            <span class="badge badge-secondary">{{ hack.level }}</span>
+                        </div>
+                        <div class="score-badge">
+                            <span class="badge {% if hack.score > 1 %}badge-success{% elif hack.score == 1 %}badge-info{% else %}badge-secondary{% endif %}">
+                                ⭐ Match Score: {{ hack.score }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <h4 class="hackathon-title">
+                        <a href="{{ hack.link }}" target="_blank">{{ hack.name }}</a>
+                    </h4>
+
+                    <div class="hackathon-details">
+                        <p class="detail-row">
+                            <span class="detail-icon">🗓️</span>
+                            <span><strong>Start:</strong> {{ hack.start_str }}</span>
+                        </p>
+                        <p class="detail-row">
+                            <span class="detail-icon">🏁</span>
+                            <span><strong>End:</strong> {{ hack.end_str }}</span>
+                        </p>
+                    </div>
+
+                    <div class="topics-wrap">
+                        {% for topic in hack.topics %}
+                            <span class="topic-pill {% if topic in hack.matched_topics %}topic-matched{% endif %}">
+                                #{{ topic }}
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="hackathon-actions">
+                        <a href="{{ hack.gcal_link }}" target="_blank" class="btn btn-sm btn-gcal">
+                            📅 Add to GCal
+                        </a>
+                        <button type="button" class="btn btn-sm btn-reminder"
+                                onclick="openReminderModal('{{ hack.id }}', '{{ hack.name }}')">
+                            🔔 Remind Me
+                        </button>
+                        <a href="{{ hack.link }}" target="_blank" class="btn btn-sm btn-outline">
+                            Visit Site ↗
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

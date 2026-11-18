@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Coding Challenge Tracker{% endblock %}</title>
+    <!-- Google Fonts for clean typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <span class="brand-icon">📅</span>
+                <span class="brand-title">Coding Challenge Tracker</span>
+                <span class="brand-badge">College Mini-Project</span>
+            </a>
+            <nav class="nav-links">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    📅 Events & Contests
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    📊 Practice Dashboard
+                </a>
+                <a href="{{ url_for('reminders') }}" class="nav-link {% if request.endpoint == 'reminders' %}active{% endif %}">
+                    🔔 Reminders
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <div class="container message-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Page Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Email Reminder Modal -->
+    <div id="reminderModal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🔔 Set Email Reminder</h3>
+                <button type="button" class="modal-close" onclick="closeReminderModal()">×</button>
+            </div>
+            <form action="{{ url_for('set_reminder') }}" method="POST">
+                <input type="hidden" name="event_id" id="modalEventId">
+                <input type="hidden" name="event_name" id="modalEventName">
+                
+                <div class="form-group">
+                    <label>Event Name</label>
+                    <input type="text" id="modalDisplayEventName" class="form-control" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="reminderEmail">Your Email Address</label>
+                    <input type="email" name="email" id="reminderEmail" class="form-control" placeholder="student@college.edu" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reminderTime">Remind Me</label>
+                    <select name="reminder_time" id="reminderTime" class="form-control">
+                        <option value="1 day before">1 day before event</option>
+                        <option value="1 hour before">1 hour before event</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeReminderModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Reminder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>💻 <strong>Coding Challenge Tracker</strong> | Built with Python, Flask, SQLite & Codeforces API</p>
+            <p class="footer-subtext">All contest and hackathon times converted to Indian Standard Time (IST: Asia/Kolkata).</p>
+        </div>
+    </footer>
+
+    <script>
+        function openReminderModal(eventId, eventName) {
+            document.getElementById('modalEventId').value = eventId;
+            document.getElementById('modalEventName').value = eventName;
+            document.getElementById('modalDisplayEventName').value = eventName;
+            document.getElementById('reminderModal').classList.add('show');
+        }
+
+        function closeReminderModal() {
+            document.getElementById('reminderModal').classList.remove('show');
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('reminderModal');
+            if (event.target === modal) {
+                closeReminderModal();
+            }
+        };
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
